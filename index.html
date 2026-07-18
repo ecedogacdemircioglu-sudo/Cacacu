@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spor Takip</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#faf7fa;margin:0;padding:20px;color:#222}
+.card{background:#fff;border-radius:16px;padding:16px;margin:16px auto;max-width:700px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+input,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #ddd;border-radius:10px}
+button{background:#ef7fa8;color:#fff;border:0;padding:10px 16px;border-radius:10px;cursor:pointer}
+label{display:block;margin:8px 0}
+pre{white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>Spor & Kilo Takibi</h2>
+<label>Tarih</label>
+<input id="date" type="date" value="2026-07-17" min="2026-07-17">
+<label><input type="checkbox" value="Üst Vücut"> Üst Vücut</label>
+<label><input type="checkbox" value="Alt Vücut"> Alt Vücut</label>
+<label><input type="checkbox" value="Core"> Core</label>
+<label><input type="checkbox" value="Kardiyo"> Kardiyo</label>
+<label>Kilo</label>
+<input id="weight" type="number" step="0.1">
+<label>Not</label>
+<textarea id="note"></textarea><br><br>
+<button id="saveBtn">Kaydet</button>
+</div>
+
+<div class="card">
+<h3>10 Gün Tahmini</h3>
+<div id="forecast">Yeterli veri yok.</div>
+</div>
+
+<div class="card">
+<h3>Dışa Aktar</h3>
+<button id="exportBtn">JSON Göster</button>
+<pre id="out"></pre>
+</div>
+
+<script>
+const date=document.getElementById('date');
+const weight=document.getElementById('weight');
+const note=document.getElementById('note');
+const forecastEl=document.getElementById('forecast');
+const out=document.getElementById('out');
+let db=JSON.parse(localStorage.getItem('fitnessDB')||'{}');
+
+function load(){
+ const x=db[date.value]||{};
+ weight.value=x.weight??'';
+ note.value=x.note??'';
+ document.querySelectorAll('input[type=checkbox]').forEach(c=>{
+   c.checked=(x.workouts||[]).includes(c.value);
+ });
+ updateForecast();
+}
+
+function save(){
+ const workouts=[...document.querySelectorAll('input[type=checkbox]:checked')].map(c=>c.value);
+ db[date.value]={weight:weight.value?parseFloat(weight.value):null,note:note.value,workouts};
+ localStorage.setItem('fitnessDB',JSON.stringify(db));
+ updateForecast();
+ alert('Kaydedildi');
+}
+
+function updateForecast(){
+ const arr=Object.keys(db).sort().map(d=>({d,w:db[d].weight})).filter(v=>typeof v.w==='number');
+ if(arr.length<2){forecastEl.textContent='Yeterli veri yok.';return;}
+ const first=arr[0],last=arr[arr.length-1];
+ const days=(new Date(last.d)-new Date(first.d))/86400000;
+ if(days<=0){forecastEl.textContent='Yeterli veri yok.';return;}
+ const rate=(last.w-first.w)/days;
+ forecastEl.textContent=`Bu hızla devam edersen 10 gün sonra yaklaşık ${(last.w+rate*10).toFixed(1)} kg olursun.`;
+}
+
+date.addEventListener('change',load);
+document.getElementById('saveBtn').addEventListener('click',save);
+document.getElementById('exportBtn').addEventListener('click',()=>out.textContent=JSON.stringify(db,null,2));
+load();
+</script>
+</body>
+</html>
