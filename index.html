@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spor Takip</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#faf7fb;margin:0}
+header{padding:16px;font-size:24px;font-weight:700}
+.wrap{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:12px}
+.day{background:#fff;border-radius:12px;min-height:72px;padding:6px;border:1px solid #eee;cursor:pointer}
+.day small{display:block;color:#777}
+.card{background:#fff;margin:12px;padding:16px;border-radius:16px}
+button{background:#ef7fa8;color:#fff;border:0;border-radius:10px;padding:10px 16px}
+input,textarea{width:100%;box-sizing:border-box;margin:6px 0;padding:8px}
+</style></head><body>
+<header>🏋️ Spor Takibi</header>
+<div class="wrap" id="cal"></div>
+<div class="card">
+<h3 id="sel">17 Temmuz 2026</h3>
+<input id="weight" type="number" step="0.1" placeholder="Kilo">
+<label><input type="checkbox" value="Üst Vücut">Üst Vücut</label>
+<label><input type="checkbox" value="Alt Vücut">Alt Vücut</label>
+<label><input type="checkbox" value="Core">Core</label>
+<label><input type="checkbox" value="Kardiyo">Kardiyo</label>
+<textarea id="note" placeholder="Not"></textarea>
+<button onclick="save()">Kaydet</button>
+<pre id="json"></pre>
+</div>
+<script>
+const db=JSON.parse(localStorage.fitnessDB||"{}");
+let current="2026-07-17";
+const cal=document.getElementById("cal");
+function draw(){
+ cal.innerHTML="";
+ for(let d=17;d<=31;d++){
+   const key=`2026-07-${String(d).padStart(2,"0")}`;
+   const x=db[key]||{};
+   const div=document.createElement("div");
+   div.className="day";
+   div.innerHTML=`<b>${d}</b><small>${x.weight?x.weight+" kg":""}</small><small>${(x.workouts||[]).join(", ")}</small>${x.note?"📝":""}`;
+   div.onclick=()=>load(key,d);
+   cal.appendChild(div);
+ }
+}
+function load(key,d){
+ current=key;
+ sel.textContent=d+" Temmuz 2026";
+ const x=db[key]||{};
+ weight.value=x.weight||"";
+ note.value=x.note||"";
+ document.querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=(x.workouts||[]).includes(c.value));
+}
+function save(){
+ db[current]={weight:weight.value?Number(weight.value):null,note:note.value,workouts:[...document.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value)};
+ localStorage.fitnessDB=JSON.stringify(db);
+ json.textContent=JSON.stringify(db,null,2);
+ draw();
+ alert("Kaydedildi");
+}
+draw();load(current,17);
+</script></body></html>
